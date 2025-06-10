@@ -26,16 +26,9 @@ const verifyToken = (token: string): (JwtPayload & { id: string }) | null => {
   }
 };
 
-type RouteContext = {
-  params: {
-    id: string;
-    commentId: string;
-  };
-};
-
 export async function DELETE(
   request: Request,
-  context: RouteContext
+  { params }: { params: { id: string; commentId: string } }
 ): Promise<NextResponse> {
   try {
     const authHeader = request.headers.get("authorization");
@@ -68,10 +61,10 @@ export async function DELETE(
 
     // Get the comment to check ownership
     const comments = await convex.query(api.social.getComments, {
-      postId: context.params.id as Id<"posts">,
+      postId: params.id as Id<"posts">,
     });
 
-    const comment = comments.find((c) => c._id === context.params.commentId);
+    const comment = comments.find((c) => c._id === params.commentId);
     if (!comment) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
@@ -82,7 +75,7 @@ export async function DELETE(
 
     try {
       await convex.mutation(api.comments.remove, {
-        id: context.params.commentId as Id<"comments">,
+        id: params.commentId as Id<"comments">,
       });
 
       return NextResponse.json({ success: true });
