@@ -66,10 +66,12 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 401 });
     }
 
-    const comment = await convex.query(api.social.getComment, {
-      commentId: context.params.commentId as Id<"comments">,
+    // Get the comment to check ownership
+    const comments = await convex.query(api.social.getComments, {
+      postId: context.params.id as Id<"posts">,
     });
 
+    const comment = comments.find((c) => c._id === context.params.commentId);
     if (!comment) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
@@ -79,8 +81,8 @@ export async function DELETE(
     }
 
     try {
-      await convex.mutation(api.social.deleteComment, {
-        commentId: context.params.commentId as Id<"comments">,
+      await convex.mutation(api.comments.remove, {
+        id: context.params.commentId as Id<"comments">,
       });
 
       return NextResponse.json({ success: true });
