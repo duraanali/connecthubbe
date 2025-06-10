@@ -26,10 +26,17 @@ const verifyToken = (token: string): (JwtPayload & { id: string }) | null => {
   }
 };
 
+type RouteContext = {
+  params: {
+    id: string;
+    commentId: string;
+  };
+};
+
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string; commentId: string } }
-) {
+  request: Request,
+  context: RouteContext
+): Promise<NextResponse> {
   try {
     const authHeader = request.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -60,7 +67,7 @@ export async function DELETE(
     }
 
     const comment = await convex.query(api.social.getComment, {
-      commentId: params.commentId as Id<"comments">,
+      commentId: context.params.commentId as Id<"comments">,
     });
 
     if (!comment) {
@@ -73,7 +80,7 @@ export async function DELETE(
 
     try {
       await convex.mutation(api.social.deleteComment, {
-        commentId: params.commentId as Id<"comments">,
+        commentId: context.params.commentId as Id<"comments">,
       });
 
       return NextResponse.json({ success: true });
