@@ -1,0 +1,35 @@
+{
+  "name": "connecthub",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/uuid": "^10.0.0",
+    "@upstash/ratelimit": "^2.0.5",
+    "@upstash/redis": "^1.35.0",
+    "bcryptjs": "^3.0.2",
+    "convex": "^1.24.8",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "next": "15.3.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.57"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@types/react": "19.1.7",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.3"
+  }
+}

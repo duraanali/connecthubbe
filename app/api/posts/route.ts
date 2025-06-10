@@ -1,0 +1,170 @@
+import { NextRequest, NextResponse } from "next/server";
+import { authMiddleware } from "../../auth";
+import { ConvexClient } from "convex/browser";
+import { api } from "../../../convex/_generated/api";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { Id } from "../../../convex/_generated/dataModel";
+
+console.log("SHEEKO", process.env.NEXT_PUBLIC_CONVEX_URL);
+if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+  throw new Error("Missing NEXT_PUBLIC_CONVEX_URL environment variable");
+}
+
+const convexUrl = process.env.CONVEX_URL || process.env.NEXT_PUBLIC_CONVEX_URL;
+if (!convexUrl) throw new Error("Convex URL is not set!");
+const convex = new ConvexClient(convexUrl);
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+
+console.log("SHEEKO 3", convex);
+
+// Helper function to verify JWT
+const verifyToken = (token: string): (JwtPayload & { id: string }) | null => {
+  try {
+    console.log("Verifying token...");
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload & {
+      id: string;
+    };
+    console.log("Token verified successfully. Decoded payload:", decoded);
+    return decoded;
+  } catch (error) {
+    console.error("Token verification failed:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      name: error instanceof Error ? error.name : "Unknown",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return null;
+  }
+};
+
+// POST /api/posts
+export async function POST(request: Request) {
+  console.log("POST /api/posts called");
+  try {
+    // Get token from Authorization header
+    const authHeader = request.headers.get("authorization");
+    console.log("Auth header:", authHeader);
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { error: "Invalid authorization header format" },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    console.log("Decoded token:", decoded);
+
+    // Get user from database
+    const user = await convex.query(api.users.getById, {
+      id: decoded.id as Id<"users">,
+    });
+    if (!user) {
+      console.error("User not found for ID:", decoded.id);
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
+    }
+
+    console.log("Found user:", user);
+
+    // Parse request body
+    const body = await request.json();
+    console.log("Request body:", body);
+
+    const { text, image_url } = body;
+
+    if (!text) {
+      return NextResponse.json({ error: "Text is required" }, { status: 400 });
+    }
+
+    console.log("Creating post with:", {
+      userId: user._id,
+      text,
+      imageUrl: image_url,
+    });
+
+    try {
+      const post = await convex.mutation(api.social.createPost, {
+        userId: user._id,
+        text,
+        imageUrl: image_url,
+      });
+
+      console.log("Created post:", post);
+      return NextResponse.json(post, { status: 201 });
+    } catch (mutationError) {
+      console.error("Convex mutation error:", {
+        error: mutationError,
+        message:
+          mutationError instanceof Error
+            ? mutationError.message
+            : "Unknown error",
+        stack: mutationError instanceof Error ? mutationError.stack : undefined,
+      });
+      throw mutationError;
+    }
+  } catch (error) {
+    console.error("Create post error:", {
+      error,
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// GET /api/posts
+export async function GET(request: Request) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    console.log("Auth header:", authHeader);
+
+    const token = authHeader?.split(" ")[1];
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const user = await convex.query(api.users.getById, {
+      id: decoded.id as Id<"users">,
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
+    }
+
+    const posts = await convex.query(api.social.getFeed, {
+      userId: user._id,
+    });
+
+    return NextResponse.json(posts);
+  } catch (error) {
+    console.error("Get posts error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
