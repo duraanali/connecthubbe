@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ConvexHttpClient } from "convex/browser";
+import { ConvexClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
+import { Id } from "../convex/_generated/dataModel";
 import jwt from "jsonwebtoken";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const convexUrl = process.env.CONVEX_URL || process.env.NEXT_PUBLIC_CONVEX_URL;
+if (!convexUrl) throw new Error("Convex URL is not set!");
+const convex = new ConvexClient(convexUrl);
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // In production, use a proper secret key
 
 export function generateToken(user: {
-  id: string;
+  id: Id<"users">;
   email: string;
   name: string;
 }): string {
@@ -53,7 +56,9 @@ export async function authMiddleware(
           email: string;
           name: string;
         };
-        const user = await convex.query(api.users.getById, { id: decoded.id });
+        const user = await convex.query(api.users.getById, {
+          id: decoded.id as Id<"users">,
+        });
 
         if (!user) {
           return NextResponse.json({ error: "Invalid token" }, { status: 401 });
