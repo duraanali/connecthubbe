@@ -11,24 +11,40 @@ console.log(
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 console.log(process.env.NEXT_PUBLIC_CONVEX_URL);
 
+// Helper function to add CORS headers
+const addCorsHeaders = (response: NextResponse) => {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+  return response;
+};
+
 export async function POST(req: NextRequest) {
   try {
     const { email, password, name } = await req.json();
 
     if (!email || !password || !name) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "All fields are required" },
         { status: 400 }
       );
+      return addCorsHeaders(response);
     }
 
     // Check if user already exists
     const existingUser = await convex.query(api.users.getByEmail, { email });
     if (existingUser) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Email already registered" },
         { status: 400 }
       );
+      return addCorsHeaders(response);
     }
 
     // Hash password
@@ -43,19 +59,21 @@ export async function POST(req: NextRequest) {
     });
 
     if (!userId) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Failed to create user" },
         { status: 500 }
       );
+      return addCorsHeaders(response);
     }
 
     // Get the created user
     const user = await convex.query(api.users.getById, { id: userId });
     if (!user) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Failed to fetch created user" },
         { status: 500 }
       );
+      return addCorsHeaders(response);
     }
 
     const token = generateToken({
@@ -74,13 +92,27 @@ export async function POST(req: NextRequest) {
       token,
     });
 
-    // Set auth cookie and return response
-    return setAuthCookie(response, token);
+    // Add CORS headers and set auth cookie
+    const corsResponse = addCorsHeaders(response);
+    return setAuthCookie(corsResponse, token);
   } catch (error) {
     console.error("Registration error:", error);
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
+    return addCorsHeaders(response);
   }
+}
+
+// Add OPTIONS handler for preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
 }
