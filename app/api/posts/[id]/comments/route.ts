@@ -28,15 +28,16 @@ const verifyToken = (token: string): (JwtPayload & { id: string }) | null => {
 
 async function getHandler(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(req.url);
     const cursor = searchParams.get("cursor");
     const limit = parseInt(searchParams.get("limit") || "10");
 
     const comments = await convex.query(api.social.getComments, {
-      postId: params.id as Id<"posts">,
+      postId: id as Id<"posts">,
       cursor: cursor || undefined,
       limit,
     });
@@ -56,10 +57,11 @@ async function getHandler(
 }
 
 async function postHandler(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
@@ -97,7 +99,7 @@ async function postHandler(
 
     try {
       const comment = await convex.mutation(api.social.createComment, {
-        postId: params.id as Id<"posts">,
+        postId: id as Id<"posts">,
         userId: user._id,
         text,
       });

@@ -28,9 +28,10 @@ const verifyToken = (token: string): (JwtPayload & { id: string }) | null => {
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
@@ -61,7 +62,7 @@ export async function POST(
 
     // Check if the user to unfollow exists
     const userToUnfollow = await convex.query(api.users.getById, {
-      id: params.id as Id<"users">,
+      id: id as Id<"users">,
     });
     if (!userToUnfollow) {
       return NextResponse.json(
@@ -71,7 +72,7 @@ export async function POST(
     }
 
     // Prevent self-unfollowing
-    if (user._id === params.id) {
+    if (user._id === id) {
       return NextResponse.json(
         { error: "Cannot unfollow yourself" },
         { status: 400 }
@@ -81,7 +82,7 @@ export async function POST(
     try {
       await convex.mutation(api.social.unfollow, {
         followerId: user._id,
-        followingId: params.id as Id<"users">,
+        followingId: id as Id<"users">,
       });
 
       return NextResponse.json({ success: true });

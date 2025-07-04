@@ -167,7 +167,7 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     // Get all posts with user information (no authentication required for public posts)
-    const posts = await convex.query(api.social.getAllPosts);
+    const posts = await convex.query(api.social.getAllPosts, {});
 
     const response = NextResponse.json(posts);
     addCorsHeaders(response);

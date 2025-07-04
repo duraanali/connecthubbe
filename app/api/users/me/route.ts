@@ -77,7 +77,10 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      const response = NextResponse.json({ error: "User not found" }, { status: 404 });
+      const response = NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
       addCorsHeaders(response);
       return response;
     }
@@ -110,5 +113,4 @@ export async function OPTIONS() {
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     },
   });
-}
 }

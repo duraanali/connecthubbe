@@ -9,6 +9,20 @@ if (!convexUrl) throw new Error("Convex URL is not set!");
 const convex = new ConvexClient(convexUrl);
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
+// Helper function to add CORS headers
+const addCorsHeaders = (response: NextResponse) => {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+  return response;
+};
+
 // Helper function to verify JWT
 const verifyToken = (token: string): (JwtPayload & { id: string }) | null => {
   try {
@@ -27,58 +41,78 @@ const verifyToken = (token: string): (JwtPayload & { id: string }) | null => {
 };
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string; commentId: string } }
-): Promise<NextResponse> {
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; commentId: string }> }
+) {
   try {
+    const { id, commentId } = await params;
     const authHeader = request.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Invalid authorization header format" },
         { status: 401 }
       );
+      return addCorsHeaders(response);
     }
 
     const token = authHeader.split(" ")[1];
     if (!token) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
+      return addCorsHeaders(response);
     }
 
     const decoded = verifyToken(token);
     if (!decoded) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      const response = NextResponse.json(
+        { error: "Invalid token" },
+        { status: 401 }
+      );
+      return addCorsHeaders(response);
     }
 
     const user = await convex.query(api.users.getById, {
       id: decoded.id as Id<"users">,
     });
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+      const response = NextResponse.json(
+        { error: "User not found" },
+        { status: 401 }
+      );
+      return addCorsHeaders(response);
     }
 
     // Get the comment to check ownership
     const comments = await convex.query(api.social.getComments, {
-      postId: params.id as Id<"posts">,
+      postId: id as Id<"posts">,
     });
 
-    const comment = comments.find((c) => c._id === params.commentId);
+    const comment = comments.find((c) => c._id === commentId);
     if (!comment) {
-      return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+      const response = NextResponse.json(
+        { error: "Comment not found" },
+        { status: 404 }
+      );
+      return addCorsHeaders(response);
     }
 
     if (comment.userId !== user._id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      const response = NextResponse.json(
+        { error: "Unauthorized to delete this comment" },
+        { status: 403 }
+      );
+      return addCorsHeaders(response);
     }
 
     try {
       await convex.mutation(api.comments.remove, {
-        id: params.commentId as Id<"comments">,
+        id: commentId as Id<"comments">,
       });
 
-      return NextResponse.json({ success: true });
+      const response = NextResponse.json({ success: true });
+      return addCorsHeaders(response);
     } catch (mutationError) {
       console.error("Convex mutation error:", {
         error: mutationError,
@@ -96,11 +130,24 @@ export async function DELETE(
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     });
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Internal server error",
       },
       { status: 500 }
     );
+    return addCorsHeaders(response);
   }
+}
+
+// Add OPTIONS handler for preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
 }

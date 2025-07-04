@@ -28,9 +28,10 @@ const verifyToken = (token: string): (JwtPayload & { id: string }) | null => {
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
@@ -61,7 +62,7 @@ export async function POST(
 
     try {
       await convex.mutation(api.social.unlike, {
-        postId: params.id as Id<"posts">,
+        postId: id as Id<"posts">,
         userId: user._id,
       });
 

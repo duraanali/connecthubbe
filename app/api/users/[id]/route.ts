@@ -23,15 +23,19 @@ const addCorsHeaders = (response: NextResponse) => {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const profile = await convex.query(api.users.getById, {
-      id: params.id as Id<"users">,
+      id: id as Id<"users">,
     });
 
     if (!profile) {
-      const response = NextResponse.json({ error: "User not found" }, { status: 404 });
+      const response = NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
       addCorsHeaders(response);
       return response;
     }
@@ -64,5 +68,4 @@ export async function OPTIONS() {
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     },
   });
-}
 }

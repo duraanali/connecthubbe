@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -40,15 +39,20 @@ export function authMiddleware(handler: Function) {
   };
 }
 
-export function setAuthCookie(token: string) {
-  cookies().set("token", token, {
+export function setAuthCookie(
+  response: NextResponse,
+  token: string
+): NextResponse {
+  response.cookies.set("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: 7 * 24 * 60 * 60, // 7 days
   });
+  return response;
 }
 
-export function clearAuthCookie() {
-  cookies().delete("token");
+export function clearAuthCookie(response: NextResponse): NextResponse {
+  response.cookies.delete("token");
+  return response;
 }

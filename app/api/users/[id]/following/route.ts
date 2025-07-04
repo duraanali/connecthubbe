@@ -9,12 +9,13 @@ const convex = new ConvexClient(convexUrl);
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // First check if the user exists
     const user = await convex.query(api.users.getById, {
-      id: params.id as Id<"users">,
+      id: id as Id<"users">,
     });
 
     if (!user) {
@@ -23,7 +24,7 @@ export async function GET(
 
     // Get the list of users being followed
     const following = await convex.query(api.social.getFollowing, {
-      userId: params.id as Id<"users">,
+      userId: id as Id<"users">,
     });
 
     return NextResponse.json(following);

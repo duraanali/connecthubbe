@@ -31,11 +31,12 @@ const verifyToken = (token: string): (JwtPayload & { id: string }) | null => {
 
 async function getHandler(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const post = await convex.query(api.social.getPost, {
-      postId: params.id as Id<"posts">,
+      postId: id as Id<"posts">,
     });
 
     if (!post) {
@@ -54,10 +55,11 @@ async function getHandler(
 
 async function deleteHandler(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   console.log("DELETE /api/posts/[id] called");
   try {
+    const { id } = await params;
     const authHeader = req.headers.get("authorization");
     console.log("Auth header:", authHeader);
 
@@ -92,10 +94,10 @@ async function deleteHandler(
     }
 
     console.log("Found user:", user);
-    console.log("Post ID:", params.id);
+    console.log("Post ID:", id);
 
     const post = await convex.query(api.social.getPost, {
-      postId: params.id as Id<"posts">,
+      postId: id as Id<"posts">,
     });
 
     if (!post) {
@@ -108,7 +110,7 @@ async function deleteHandler(
 
     try {
       await convex.mutation(api.social.deletePost, {
-        postId: params.id as Id<"posts">,
+        postId: id as Id<"posts">,
         userId: user._id,
       });
 
