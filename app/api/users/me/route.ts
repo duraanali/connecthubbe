@@ -9,6 +9,20 @@ if (!convexUrl) throw new Error("Convex URL is not set!");
 const convex = new ConvexClient(convexUrl);
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
+// Helper function to add CORS headers
+const addCorsHeaders = (response: NextResponse) => {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+  return response;
+};
+
 // Helper function to verify JWT
 const verifyToken = (token: string): (JwtPayload & { id: string }) | null => {
   try {
@@ -30,23 +44,32 @@ export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Invalid authorization header format" },
         { status: 401 }
       );
+      addCorsHeaders(response);
+      return response;
     }
 
     const token = authHeader.split(" ")[1];
     if (!token) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
+      addCorsHeaders(response);
+      return response;
     }
 
     const decoded = verifyToken(token);
     if (!decoded) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      const response = NextResponse.json(
+        { error: "Invalid token" },
+        { status: 401 }
+      );
+      addCorsHeaders(response);
+      return response;
     }
 
     const user = await convex.query(api.users.getById, {
@@ -54,19 +77,38 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      const response = NextResponse.json({ error: "User not found" }, { status: 404 });
+      addCorsHeaders(response);
+      return response;
     }
 
-    return NextResponse.json(user);
+    const response = NextResponse.json(user);
+    addCorsHeaders(response);
+    return response;
   } catch (error) {
     console.error("Error fetching user:", {
       error,
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     });
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
+    addCorsHeaders(response);
+    return response;
   }
+}
+
+// Add OPTIONS handler for preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
+}
 }

@@ -43,12 +43,15 @@ export const getById = query({
 
     return {
       ...post,
+      text: post.text || "",
+      imageUrl: post.imageUrl || "",
       likesCount: likes.length,
       comments,
       user: {
-        id: user?._id,
-        name: user?.name,
-        avatarUrl: user?.avatarUrl,
+        id: user?._id || "",
+        name: user?.name || "",
+        email: user?.email || "",
+        avatarUrl: user?.avatarUrl || "",
       },
     };
   },
@@ -90,11 +93,14 @@ export const getFeed = query({
 
         return {
           ...post,
+          text: post.text || "",
+          imageUrl: post.imageUrl || "",
           likesCount: likes.length,
           user: {
-            id: user?._id,
-            name: user?.name,
-            avatarUrl: user?.avatarUrl,
+            id: user?._id || "",
+            name: user?.name || "",
+            email: user?.email || "",
+            avatarUrl: user?.avatarUrl || "",
           },
         };
       })

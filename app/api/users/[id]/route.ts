@@ -7,6 +7,20 @@ const convexUrl = process.env.CONVEX_URL || process.env.NEXT_PUBLIC_CONVEX_URL;
 if (!convexUrl) throw new Error("Convex URL is not set!");
 const convex = new ConvexClient(convexUrl);
 
+// Helper function to add CORS headers
+const addCorsHeaders = (response: NextResponse) => {
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+  return response;
+};
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -17,19 +31,38 @@ export async function GET(
     });
 
     if (!profile) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      const response = NextResponse.json({ error: "User not found" }, { status: 404 });
+      addCorsHeaders(response);
+      return response;
     }
 
-    return NextResponse.json(profile);
+    const response = NextResponse.json(profile);
+    addCorsHeaders(response);
+    return response;
   } catch (error) {
     console.error("Error fetching user profile:", {
       error,
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     });
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
+    addCorsHeaders(response);
+    return response;
   }
+}
+
+// Add OPTIONS handler for preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
+}
 }

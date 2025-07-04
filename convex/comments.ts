@@ -40,10 +40,12 @@ export const getByPost = query({
         const user = await ctx.db.get(comment.userId);
         return {
           ...comment,
+          text: comment.text || "",
           user: {
-            id: user?._id,
-            name: user?.name,
-            avatarUrl: user?.avatarUrl,
+            id: user?._id || "",
+            name: user?.name || "",
+            email: user?.email || "",
+            avatarUrl: user?.avatarUrl || "",
           },
         };
       })

@@ -151,9 +151,10 @@ export const getFollowing = query({
       follows.map(async (follow) => {
         const user = await ctx.db.get(follow.followingId);
         return {
-          id: user?._id,
-          name: user?.name,
-          avatarUrl: user?.avatarUrl,
+          id: user?._id || "",
+          name: user?.name || "",
+          email: user?.email || "",
+          avatarUrl: user?.avatarUrl || "",
         };
       })
     );
@@ -221,9 +222,10 @@ export const getLikes = query({
       likes.map(async (like) => {
         const user = await ctx.db.get(like.userId);
         return {
-          id: user?._id,
-          name: user?.name,
-          avatarUrl: user?.avatarUrl,
+          id: user?._id || "",
+          name: user?.name || "",
+          email: user?.email || "",
+          avatarUrl: user?.avatarUrl || "",
         };
       })
     );
@@ -275,14 +277,56 @@ export const getComments = query({
         return {
           ...comment,
           user: {
-            id: user?._id,
-            name: user?.name,
-            avatarUrl: user?.avatarUrl,
+            id: user?._id || "",
+            name: user?.name || "",
+            email: user?.email || "",
+            avatarUrl: user?.avatarUrl || "",
           },
         };
       })
     );
 
     return commentsWithUsers;
+  },
+});
+
+export const getAllPosts = query({
+  handler: async (ctx) => {
+    const posts = await ctx.db.query("posts").order("desc").collect();
+
+    const postsWithUsers = await Promise.all(
+      posts.map(async (post) => {
+        const user = await ctx.db.get(post.userId);
+
+        // Get likes count for this post
+        const likes = await ctx.db
+          .query("likes")
+          .withIndex("by_post", (q) => q.eq("postId", post._id))
+          .collect();
+
+        // Get comments count for this post
+        const comments = await ctx.db
+          .query("comments")
+          .withIndex("by_post", (q) => q.eq("postId", post._id))
+          .collect();
+
+        return {
+          id: post._id,
+          text: post.text || "",
+          imageUrl: post.imageUrl || "",
+          createdAt: post.createdAt,
+          likesCount: likes.length,
+          commentsCount: comments.length,
+          user: {
+            id: user?._id || "",
+            name: user?.name || "",
+            email: user?.email || "",
+            avatarUrl: user?.avatarUrl || "",
+          },
+        };
+      })
+    );
+
+    return postsWithUsers.sort((a, b) => b.createdAt - a.createdAt);
   },
 });

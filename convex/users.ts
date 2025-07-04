@@ -54,10 +54,20 @@ export const getById = query({
       .order("desc")
       .take(10);
 
+    // Get total posts count
+    const allPosts = await ctx.db
+      .query("posts")
+      .withIndex("by_user", (q) => q.eq("userId", args.id))
+      .collect();
+
     return {
       ...user,
+      name: user.name || "",
+      email: user.email || "",
+      avatarUrl: user.avatarUrl || "",
       followersCount: followers.length,
       followingCount: following.length,
+      postsCount: allPosts.length,
       recentPosts: posts,
     };
   },
