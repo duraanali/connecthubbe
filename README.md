@@ -217,14 +217,7 @@ Authorization: Bearer <jwt_token> (required)
   "followersCount": 15,
   "followingCount": 8,
   "postsCount": 25,
-  "recentPosts": [
-    {
-      "id": "post_id_here",
-      "text": "Hello world!",
-      "imageUrl": "",
-      "createdAt": 1640995200000
-    }
-  ]
+  "recentPosts": []
 }
 ```
 
@@ -432,29 +425,113 @@ Authorization: Bearer <jwt_token> (required)
 
 ---
 
+### Search Users
+
+**Endpoint:** `GET /api/users/search`
+
+**Description:** Search users by name or username (partial match)
+
+**Headers:**
+
+```
+Authorization: Bearer <jwt_token> (required)
+```
+
+**Query Parameters:**
+
+- `query` (string, optional): The name or username to search. If not provided, returns all users
+- `limit` (number, optional): Number of results to return (default: 10, max: 100)
+
+**Example Requests:**
+
+```
+GET /api/users/search?query=duraan&limit=5
+GET /api/users/search?limit=20
+GET /api/users/search
+```
+
+**Success Response (200):**
+
+```json
+[
+  {
+    "id": "user_123",
+    "name": "Duraan Ali",
+    "username": "durali",
+    "avatar": "https://cdn.connecthub.app/avatars/durali.jpg",
+    "is_following": true
+  },
+  {
+    "id": "user_124",
+    "name": "Durrah Noor",
+    "username": "durrah",
+    "avatar": null,
+    "is_following": false
+  }
+]
+```
+
+**Error Responses:**
+
+- **400 Bad Request:**
+
+  ```json
+  {
+    "error": "Limit must be a number between 1 and 100"
+  }
+  ```
+
+- **401 Unauthorized:**
+
+  ```json
+  {
+    "error": "Authentication required"
+  }
+  ```
+
+- **500 Internal Server Error:**
+  ```json
+  {
+    "error": "Internal server error"
+  }
+  ```
+
+---
+
 ### Get User by ID
 
 **Endpoint:** `GET /api/users/{id}`
 
-**Description:** Get public user information by user ID
+**Description:** Get another user's public profile
 
 **Parameters:**
 
-- `id` (path parameter, required): User ID
+- `id` (path parameter, required): User ID of the profile to fetch
+
+**Headers:**
+
+```
+Authorization: Bearer <jwt_token> (optional)
+```
+
+**Example Request:**
+
+```
+GET /api/users/user_123
+```
 
 **Success Response (200):**
 
 ```json
 {
-  "id": "user_id_here",
-  "name": "John Doe",
-  "email": "john@example.com",
-  "avatarUrl": "https://example.com/avatar.jpg",
-  "createdAt": 1640995200000,
-  "followersCount": 15,
-  "followingCount": 8,
-  "postsCount": 25,
-  "recentPosts": []
+  "id": "user_123",
+  "name": "Duraan Ali",
+  "username": "durali",
+  "avatar": "https://cdn.connecthub.app/avatars/durali.jpg",
+  "bio": "Frontend developer and mentor",
+  "followers_count": 52,
+  "following_count": 17,
+  "is_following": true
 }
 ```
 
@@ -465,6 +542,122 @@ Authorization: Bearer <jwt_token> (required)
   ```json
   {
     "error": "User not found"
+  }
+  ```
+
+- **500 Internal Server Error:**
+  ```json
+  {
+    "error": "Internal server error"
+  }
+  ```
+
+---
+
+### Get My Following List
+
+**Endpoint:** `GET /api/users/me/following`
+
+**Description:** Get list of users that the current user is following
+
+**Headers:**
+
+```
+Authorization: Bearer <jwt_token> (required)
+```
+
+**Success Response (200):**
+
+```json
+[
+  {
+    "id": "user_id_1",
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "avatarUrl": "https://example.com/avatar1.jpg",
+    "username": "jane"
+  },
+  {
+    "id": "user_id_2",
+    "name": "Bob Smith",
+    "email": "bob@example.com",
+    "avatarUrl": "",
+    "username": "bob"
+  }
+]
+```
+
+**Error Responses:**
+
+- **401 Unauthorized:**
+
+  ```json
+  {
+    "error": "Authentication required"
+  }
+  ```
+
+  ```json
+  {
+    "error": "Invalid token"
+  }
+  ```
+
+- **500 Internal Server Error:**
+  ```json
+  {
+    "error": "Internal server error"
+  }
+  ```
+
+---
+
+### Get My Followers List
+
+**Endpoint:** `GET /api/users/me/followers`
+
+**Description:** Get list of users who are following the current user
+
+**Headers:**
+
+```
+Authorization: Bearer <jwt_token> (required)
+```
+
+**Success Response (200):**
+
+```json
+[
+  {
+    "id": "user_id_1",
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "avatarUrl": "https://example.com/avatar1.jpg",
+    "username": "alice"
+  },
+  {
+    "id": "user_id_2",
+    "name": "Charlie Brown",
+    "email": "charlie@example.com",
+    "avatarUrl": "",
+    "username": "charlie"
+  }
+]
+```
+
+**Error Responses:**
+
+- **401 Unauthorized:**
+
+  ```json
+  {
+    "error": "Authentication required"
+  }
+  ```
+
+  ```json
+  {
+    "error": "Invalid token"
   }
   ```
 
@@ -584,6 +777,14 @@ Authorization: Bearer <jwt_token> (required)
 ```
 
 **Error Responses:**
+
+- **400 Bad Request:**
+
+  ```json
+  {
+    "error": "Cannot unfollow yourself"
+  }
+  ```
 
 - **401 Unauthorized:**
 
@@ -713,7 +914,7 @@ Content-Type: application/json
 
 ```json
 {
-  "id": "post_id_here",
+  "_id": "post_id_here",
   "userId": "user_id_here",
   "text": "Hello world! This is my first post.",
   "imageUrl": "https://example.com/image.jpg",
@@ -760,6 +961,11 @@ Content-Type: application/json
 - **500 Internal Server Error:**
   ```json
   {
+    "error": "Already liked this post"
+  }
+  ```
+  ```json
+  {
     "error": "Internal server error"
   }
   ```
@@ -770,7 +976,7 @@ Content-Type: application/json
 
 **Endpoint:** `GET /api/posts`
 
-**Description:** Get all posts from all users (public endpoint)
+**Description:** Get all posts with user information (public)
 
 **Success Response (200):**
 
@@ -804,6 +1010,68 @@ Content-Type: application/json
 
 ---
 
+### Get User Feed
+
+**Endpoint:** `GET /api/posts/feed`
+
+**Description:** Get posts from users that the current user is following
+
+**Headers:**
+
+```
+Authorization: Bearer <jwt_token> (required)
+```
+
+**Success Response (200):**
+
+```json
+[
+  {
+    "userId": "user_id_here",
+    "text": "Hello world!",
+    "imageUrl": "https://example.com/image.jpg",
+    "createdAt": 1640995200000
+  }
+]
+```
+
+**Error Responses:**
+
+- **401 Unauthorized:**
+
+  ```json
+  {
+    "error": "Invalid authorization header format"
+  }
+  ```
+
+  ```json
+  {
+    "error": "Authentication required"
+  }
+  ```
+
+  ```json
+  {
+    "error": "Invalid token"
+  }
+  ```
+
+  ```json
+  {
+    "error": "User not found"
+  }
+  ```
+
+- **500 Internal Server Error:**
+  ```json
+  {
+    "error": "Internal server error"
+  }
+  ```
+
+---
+
 ### Get Post by ID
 
 **Endpoint:** `GET /api/posts/{id}`
@@ -818,33 +1086,11 @@ Content-Type: application/json
 
 ```json
 {
-  "id": "post_id_here",
+  "_id": "post_id_here",
   "userId": "user_id_here",
   "text": "Hello world!",
   "imageUrl": "https://example.com/image.jpg",
-  "createdAt": 1640995200000,
-  "likesCount": 5,
-  "comments": [
-    {
-      "id": "comment_id_here",
-      "postId": "post_id_here",
-      "userId": "user_id_here",
-      "text": "Great post!",
-      "createdAt": 1640995200000,
-      "user": {
-        "id": "user_id_here",
-        "name": "Jane Doe",
-        "email": "jane@example.com",
-        "avatarUrl": "https://example.com/avatar.jpg"
-      }
-    }
-  ],
-  "user": {
-    "id": "user_id_here",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "avatarUrl": "https://example.com/avatar.jpg"
-  }
+  "createdAt": 1640995200000
 }
 ```
 
@@ -881,7 +1127,7 @@ Authorization: Bearer <jwt_token> (required)
 
 **Parameters:**
 
-- `id` (path parameter, required): Post ID
+- `id` (path parameter, required): Post ID to delete
 
 **Success Response (200):**
 
@@ -923,7 +1169,7 @@ Authorization: Bearer <jwt_token> (required)
 
   ```json
   {
-    "error": "Unauthorized to delete this post"
+    "error": "Unauthorized"
   }
   ```
 
@@ -958,7 +1204,7 @@ Authorization: Bearer <jwt_token> (required)
 
 **Parameters:**
 
-- `id` (path parameter, required): Post ID
+- `id` (path parameter, required): Post ID to like
 
 **Success Response (200):**
 
@@ -996,23 +1242,12 @@ Authorization: Bearer <jwt_token> (required)
   }
   ```
 
-- **404 Not Found:**
-
-  ```json
-  {
-    "error": "Post not found"
-  }
-  ```
-
-- **409 Conflict:**
-
+- **500 Internal Server Error:**
   ```json
   {
     "error": "Already liked this post"
   }
   ```
-
-- **500 Internal Server Error:**
   ```json
   {
     "error": "Internal server error"
@@ -1035,7 +1270,7 @@ Authorization: Bearer <jwt_token> (required)
 
 **Parameters:**
 
-- `id` (path parameter, required): Post ID
+- `id` (path parameter, required): Post ID to unlike
 
 **Success Response (200):**
 
@@ -1073,14 +1308,6 @@ Authorization: Bearer <jwt_token> (required)
   }
   ```
 
-- **404 Not Found:**
-
-  ```json
-  {
-    "error": "Post not found"
-  }
-  ```
-
 - **500 Internal Server Error:**
   ```json
   {
@@ -1091,6 +1318,55 @@ Authorization: Bearer <jwt_token> (required)
 ---
 
 ## Comment Endpoints
+
+### Get Post Comments
+
+**Endpoint:** `GET /api/posts/{id}/comments`
+
+**Description:** Get comments for a specific post
+
+**Parameters:**
+
+- `id` (path parameter, required): Post ID
+- `cursor` (query parameter, optional): Pagination cursor
+- `limit` (query parameter, optional): Number of comments to return (default: 10)
+
+**Example Request:**
+
+```
+GET /api/posts/post_123/comments?limit=20&cursor=comment_456
+```
+
+**Success Response (200):**
+
+```json
+[
+  {
+    "_id": "comment_id_here",
+    "postId": "post_id_here",
+    "userId": "user_id_here",
+    "text": "Great post!",
+    "createdAt": 1640995200000,
+    "user": {
+      "id": "user_id_here",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "avatarUrl": "https://example.com/avatar.jpg"
+    }
+  }
+]
+```
+
+**Error Responses:**
+
+- **500 Internal Server Error:**
+  ```json
+  {
+    "error": "Internal server error"
+  }
+  ```
+
+---
 
 ### Create Comment
 
@@ -1121,7 +1397,7 @@ Content-Type: application/json
 
 ```json
 {
-  "text": "Great post! Thanks for sharing."
+  "text": "This is a great post!"
 }
 ```
 
@@ -1129,10 +1405,10 @@ Content-Type: application/json
 
 ```json
 {
-  "id": "comment_id_here",
+  "_id": "comment_id_here",
   "postId": "post_id_here",
   "userId": "user_id_here",
-  "text": "Great post! Thanks for sharing.",
+  "text": "This is a great post!",
   "createdAt": 1640995200000
 }
 ```
@@ -1173,69 +1449,12 @@ Content-Type: application/json
   }
   ```
 
-- **404 Not Found:**
-
+- **500 Internal Server Error:**
   ```json
   {
     "error": "Post not found"
   }
   ```
-
-- **500 Internal Server Error:**
-  ```json
-  {
-    "error": "Internal server error"
-  }
-  ```
-
----
-
-### Get Comments
-
-**Endpoint:** `GET /api/posts/{id}/comments`
-
-**Description:** Get all comments for a post
-
-**Parameters:**
-
-- `id` (path parameter, required): Post ID
-
-**Query Parameters:**
-
-- `cursor` (optional): Pagination cursor
-- `limit` (optional): Number of comments to return (default: 10)
-
-**Success Response (200):**
-
-```json
-[
-  {
-    "id": "comment_id_here",
-    "postId": "post_id_here",
-    "userId": "user_id_here",
-    "text": "Great post!",
-    "createdAt": 1640995200000,
-    "user": {
-      "id": "user_id_here",
-      "name": "Jane Doe",
-      "email": "jane@example.com",
-      "avatarUrl": "https://example.com/avatar.jpg"
-    }
-  }
-]
-```
-
-**Error Responses:**
-
-- **404 Not Found:**
-
-  ```json
-  {
-    "error": "Post not found"
-  }
-  ```
-
-- **500 Internal Server Error:**
   ```json
   {
     "error": "Internal server error"
@@ -1259,7 +1478,7 @@ Authorization: Bearer <jwt_token> (required)
 **Parameters:**
 
 - `id` (path parameter, required): Post ID
-- `commentId` (path parameter, required): Comment ID
+- `commentId` (path parameter, required): Comment ID to delete
 
 **Success Response (200):**
 
@@ -1324,7 +1543,7 @@ Authorization: Bearer <jwt_token> (required)
 
 ## Error Handling
 
-All endpoints follow a consistent error response format:
+All endpoints return consistent error responses with the following structure:
 
 ```json
 {
@@ -1332,38 +1551,71 @@ All endpoints follow a consistent error response format:
 }
 ```
 
-### HTTP Status Codes
+### Common HTTP Status Codes
 
-| Status Code | Description           | Common Use Cases                                  |
-| ----------- | --------------------- | ------------------------------------------------- |
-| 200         | OK                    | Successful GET, PUT, DELETE operations            |
-| 201         | Created               | Successful POST operations (create)               |
-| 400         | Bad Request           | Invalid input data, missing required fields       |
-| 401         | Unauthorized          | Missing or invalid authentication token           |
-| 403         | Forbidden             | Authenticated but not authorized for the action   |
-| 404         | Not Found             | Resource doesn't exist                            |
-| 409         | Conflict              | Resource already exists (e.g., already following) |
-| 429         | Too Many Requests     | Rate limit exceeded                               |
-| 500         | Internal Server Error | Server-side error                                 |
+- **200 OK**: Request successful
+- **201 Created**: Resource created successfully
+- **400 Bad Request**: Invalid request data
+- **401 Unauthorized**: Authentication required or invalid
+- **403 Forbidden**: Access denied
+- **404 Not Found**: Resource not found
+- **500 Internal Server Error**: Server error
 
-### Common Error Messages
+### Error Response Examples
 
-| Error Message                         | Status Code | Description                             |
-| ------------------------------------- | ----------- | --------------------------------------- |
-| "All fields are required"             | 400         | Missing required fields in request body |
-| "Email already registered"            | 400         | Email is already in use                 |
-| "Invalid authorization header format" | 401         | Authorization header is malformed       |
-| "Authentication required"             | 401         | Missing Authorization header            |
-| "Invalid token"                       | 401         | JWT token is invalid or expired         |
-| "User not found"                      | 401/404     | User doesn't exist                      |
-| "Unauthorized to delete this post"    | 403         | User doesn't own the post               |
-| "Unauthorized to delete this comment" | 403         | User doesn't own the comment            |
-| "Post not found"                      | 404         | Post doesn't exist                      |
-| "Comment not found"                   | 404         | Comment doesn't exist                   |
-| "Already following this user"         | 409         | User is already being followed          |
-| "Already liked this post"             | 409         | Post is already liked                   |
-| "Too Many Requests"                   | 429         | Rate limit exceeded                     |
-| "Internal server error"               | 500         | Unexpected server error                 |
+**Authentication Errors:**
+
+```json
+{
+  "error": "Invalid authorization header format"
+}
+```
+
+```json
+{
+  "error": "Authentication required"
+}
+```
+
+```json
+{
+  "error": "Invalid token"
+}
+```
+
+**Validation Errors:**
+
+```json
+{
+  "error": "All fields are required"
+}
+```
+
+```json
+{
+  "error": "Text is required"
+}
+```
+
+**Business Logic Errors:**
+
+```json
+{
+  "error": "Cannot follow yourself"
+}
+```
+
+```json
+{
+  "error": "Already following this user"
+}
+```
+
+```json
+{
+  "error": "Already liked this post"
+}
+```
 
 ---
 
@@ -1371,81 +1623,94 @@ All endpoints follow a consistent error response format:
 
 ### User Object
 
-```typescript
+```json
 {
-  id: string;                    // User ID
-  name: string;                  // User's display name
-  email: string;                 // User's email address
-  avatarUrl: string;             // User's avatar URL (empty string if none)
-  createdAt: number;             // Timestamp when user was created
-  followersCount: number;        // Number of followers
-  followingCount: number;        // Number of users being followed
-  postsCount: number;            // Number of posts created
-  recentPosts: Post[];           // Array of recent posts (max 10)
+  "id": "string",
+  "name": "string",
+  "email": "string",
+  "avatarUrl": "string",
+  "username": "string",
+  "createdAt": "number",
+  "followersCount": "number",
+  "followingCount": "number",
+  "postsCount": "number",
+  "recentPosts": "array"
 }
 ```
 
 ### Post Object
 
-```typescript
+```json
 {
-  id: string; // Post ID
-  text: string; // Post content
-  imageUrl: string; // Post image URL (empty string if none)
-  createdAt: number; // Timestamp when post was created
-  likesCount: number; // Number of likes
-  commentsCount: number; // Number of comments
-  user: {
-    // User who created the post
-    id: string;
-    name: string;
-    email: string;
-    avatarUrl: string;
-  }
+  "id": "string",
+  "userId": "string",
+  "text": "string",
+  "imageUrl": "string",
+  "createdAt": "number",
+  "likesCount": "number",
+  "commentsCount": "number",
+  "user": "User Object"
 }
 ```
 
 ### Comment Object
 
-```typescript
+```json
 {
-  id: string; // Comment ID
-  postId: string; // ID of the post being commented on
-  userId: string; // ID of the user who made the comment
-  text: string; // Comment content
-  createdAt: number; // Timestamp when comment was created
-  user: {
-    // User who made the comment
-    id: string;
-    name: string;
-    email: string;
-    avatarUrl: string;
-  }
+  "id": "string",
+  "postId": "string",
+  "userId": "string",
+  "text": "string",
+  "createdAt": "number",
+  "user": "User Object"
 }
 ```
 
 ### Authentication Response
 
-```typescript
+```json
 {
-  user: {
-    // User information
-    id: string;
-    name: string;
-    email: string;
-  }
-  token: string; // JWT token for authentication
+  "user": "User Object",
+  "token": "string"
 }
 ```
 
 ---
 
-## Development Notes
+## Complete API Summary
 
-- All timestamps are in milliseconds since Unix epoch
-- All string fields return empty strings instead of null/undefined
-- All numeric fields return 0 instead of null/undefined
-- All array fields return empty arrays instead of null/undefined
-- CORS is enabled for all origins
-- Rate limiting applies only to POST requests
-- JWT tokens expire after 7 days
+### Authentication (4 endpoints)
+
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/profile` - Get current user profile
+- `PUT /api/auth/profile` - Update current user profile
+
+### Users (9 endpoints)
+
+- `GET /api/users/me` - Get current user info
+- `GET /api/users/search` - Search users
+- `GET /api/users/{id}` - Get public user profile
+- `GET /api/users/me/following` - Get users I'm following
+- `GET /api/users/me/followers` - Get users following me
+- `POST /api/users/{id}/follow` - Follow a user
+- `POST /api/users/{id}/unfollow` - Unfollow a user
+- `GET /api/users/{id}/following` - Get user's following list
+
+### Posts (6 endpoints)
+
+- `POST /api/posts` - Create post
+- `GET /api/posts` - Get all posts
+- `GET /api/posts/feed` - Get user feed
+- `GET /api/posts/{id}` - Get specific post
+- `DELETE /api/posts/{id}` - Delete post
+- `POST /api/posts/{id}/like` - Like post
+- `POST /api/posts/{id}/unlike` - Unlike post
+
+### Comments (3 endpoints)
+
+- `GET /api/posts/{id}/comments` - Get post comments
+- `POST /api/posts/{id}/comments` - Create comment
+- `DELETE /api/posts/{id}/comments/{commentId}` - Delete comment
+
+**Total: 22 API endpoints** covering authentication, user management, social features, posts, and comments.

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConvexClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { validateJWT } from "../../../../lib/auth";
 
 const convexUrl = process.env.CONVEX_URL || process.env.NEXT_PUBLIC_CONVEX_URL;
 if (!convexUrl) throw new Error("Convex URL is not set!");
@@ -27,8 +28,22 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const profile = await convex.query(api.users.getById, {
-      id: id as Id<"users">,
+
+    // Get current user from JWT token (optional)
+    const authHeader = req.headers.get("authorization");
+    let currentUserId: string | undefined;
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.substring(7);
+      const user = await validateJWT(token);
+      if (user) {
+        currentUserId = user._id;
+      }
+    }
+
+    const profile = await convex.query(api.users.getPublicProfile, {
+      userId: id as Id<"users">,
+      currentUserId: currentUserId as any,
     });
 
     if (!profile) {

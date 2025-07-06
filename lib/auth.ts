@@ -20,6 +20,23 @@ export function verifyToken(token: string): JWTPayload {
   }
 }
 
+export async function validateJWT(token: string) {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as {
+      id: string;
+      email: string;
+      name: string;
+    };
+    return {
+      _id: decoded.id,
+      email: decoded.email,
+      name: decoded.name,
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
 export async function getAuthUser(req: NextRequest) {
   const token = req.headers.get("authorization")?.split(" ")[1];
   if (!token) {

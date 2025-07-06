@@ -121,3 +121,129 @@ export const validateToken = query({
     };
   },
 });
+
+export const searchUsers = query({
+  args: {
+    query: v.optional(v.string()),
+    limit: v.optional(v.number()),
+    currentUserId: v.optional(v.id("users")),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 10;
+
+    // Get all users
+    const allUsers = await ctx.db.query("users").collect();
+
+    // Filter by name if query is provided, otherwise return all users
+    const filteredUsers = args.query
+      ? allUsers
+          .filter((user) =>
+            user.name.toLowerCase().includes(args.query!.toLowerCase())
+          )
+          .slice(0, limit)
+      : allUsers.slice(0, limit);
+
+    // For each user, check if current user is following them
+    const usersWithFollowingStatus = await Promise.all(
+      filteredUsers.map(async (user) => {
+        let isFollowing = false;
+
+        if (args.currentUserId) {
+          const follow = await ctx.db
+            .query("follows")
+            .withIndex("by_follower_following", (q) =>
+              q
+                .eq("followerId", args.currentUserId!)
+                .eq("followingId", user._id)
+            )
+            .first();
+
+          isFollowing = !!follow;
+        }
+
+        return {
+          id: user._id,
+          name: user.name || "",
+          username: user.email.split("@")[0], // Use email prefix as username
+          avatar: user.avatarUrl || null,
+          is_following: isFollowing,
+        };
+      })
+    );
+
+    return usersWithFollowingStatus;
+  },
+});
+
+export const getPublicProfile = query({
+  args: {
+    userId: v.id("users"),
+    currentUserId: v.optional(v.id("users")),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) return null;
+
+    // Get follower and following counts
+    const followers = await ctx.db
+      .query("follows")
+      .withIndex("by_following", (q) => q.eq("followingId", args.userId))
+      .collect();
+
+    const following = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", args.userId))
+      .collect();
+
+    // Check if current user is following this user
+    let isFollowing = false;
+    if (args.currentUserId) {
+      const follow = await ctx.db
+        .query("follows")
+        .withIndex("by_follower_following", (q) =>
+          q.eq("followerId", args.currentUserId!).eq("followingId", args.userId)
+        )
+        .first();
+
+      isFollowing = !!follow;
+    }
+
+    return {
+      id: user._id,
+      name: user.name || "",
+      username: user.email.split("@")[0], // Use email prefix as username
+      avatar: user.avatarUrl || null,
+      bio: "", // Not in schema yet, return empty string
+      followers_count: followers.length,
+      following_count: following.length,
+      is_following: isFollowing,
+    };
+  },
+});
+
+export const getFollowers = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    // Get all follows where this user is being followed
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("by_following", (q) => q.eq("followingId", args.userId))
+      .collect();
+
+    // Get user details for each follower
+    const followers = await Promise.all(
+      follows.map(async (follow) => {
+        const user = await ctx.db.get(follow.followerId);
+        return {
+          id: user?._id || "",
+          name: user?.name || "",
+          email: user?.email || "",
+          avatarUrl: user?.avatarUrl || "",
+          username: user?.email ? user.email.split("@")[0] : "",
+        };
+      })
+    );
+
+    return followers;
+  },
+});
