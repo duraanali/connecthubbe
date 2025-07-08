@@ -166,8 +166,29 @@ export async function POST(request: Request) {
 // GET /api/posts
 export async function GET(request: Request) {
   try {
+    // Try to get user ID from authorization header if present
+    let userId: Id<"users"> | undefined;
+    const authHeader = request.headers.get("authorization");
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      if (token) {
+        const decoded = verifyToken(token);
+        if (decoded) {
+          const user = await convex.query(api.users.getById, {
+            id: decoded.id as Id<"users">,
+          });
+          if (user) {
+            userId = user._id;
+          }
+        }
+      }
+    }
+
     // Get all posts with user information (no authentication required for public posts)
-    const posts = await convex.query(api.social.getAllPosts, {});
+    const posts = await convex.query(api.social.getAllPosts, {
+      userId,
+    });
 
     const response = NextResponse.json(posts);
     addCorsHeaders(response);

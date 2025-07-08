@@ -978,6 +978,10 @@ Content-Type: application/json
 
 **Description:** Get all posts with user information (public)
 
+**Headers:**
+
+- `Authorization: Bearer <jwt_token>` (optional): If provided, includes `likedByUser` field indicating if the current user has liked each post
+
 **Success Response (200):**
 
 ```json
@@ -989,6 +993,7 @@ Content-Type: application/json
     "createdAt": 1640995200000,
     "likesCount": 5,
     "commentsCount": 3,
+    "likedByUser": true,
     "user": {
       "id": "user_id_here",
       "name": "John Doe",
@@ -999,6 +1004,8 @@ Content-Type: application/json
 ]
 ```
 
+````
+
 **Error Responses:**
 
 - **500 Internal Server Error:**
@@ -1006,7 +1013,7 @@ Content-Type: application/json
   {
     "error": "Internal server error"
   }
-  ```
+````
 
 ---
 
@@ -1027,13 +1034,25 @@ Authorization: Bearer <jwt_token> (required)
 ```json
 [
   {
+    "id": "post_id_here",
     "userId": "user_id_here",
     "text": "Hello world!",
     "imageUrl": "https://example.com/image.jpg",
-    "createdAt": 1640995200000
+    "createdAt": 1640995200000,
+    "likesCount": 5,
+    "commentsCount": 3,
+    "likedByUser": true,
+    "user": {
+      "id": "user_id_here",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "avatarUrl": "https://example.com/avatar.jpg"
+    }
   }
 ]
 ```
+
+````
 
 **Error Responses:**
 
@@ -1043,25 +1062,25 @@ Authorization: Bearer <jwt_token> (required)
   {
     "error": "Invalid authorization header format"
   }
-  ```
+````
 
-  ```json
-  {
-    "error": "Authentication required"
-  }
-  ```
+```json
+{
+  "error": "Authentication required"
+}
+```
 
-  ```json
-  {
-    "error": "Invalid token"
-  }
-  ```
+```json
+{
+  "error": "Invalid token"
+}
+```
 
-  ```json
-  {
-    "error": "User not found"
-  }
-  ```
+```json
+{
+  "error": "User not found"
+}
+```
 
 - **500 Internal Server Error:**
   ```json
@@ -1078,6 +1097,10 @@ Authorization: Bearer <jwt_token> (required)
 
 **Description:** Get a specific post by ID
 
+**Headers:**
+
+- `Authorization: Bearer <jwt_token>` (optional): If provided, includes `likedByUser` field indicating if the current user has liked the post
+
 **Parameters:**
 
 - `id` (path parameter, required): Post ID
@@ -1086,13 +1109,24 @@ Authorization: Bearer <jwt_token> (required)
 
 ```json
 {
-  "_id": "post_id_here",
+  "id": "post_id_here",
   "userId": "user_id_here",
   "text": "Hello world!",
   "imageUrl": "https://example.com/image.jpg",
-  "createdAt": 1640995200000
+  "createdAt": 1640995200000,
+  "likesCount": 5,
+  "commentsCount": 3,
+  "likedByUser": true,
+  "user": {
+    "id": "user_id_here",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "avatarUrl": "https://example.com/avatar.jpg"
+  }
 }
 ```
+
+````
 
 **Error Responses:**
 
@@ -1102,7 +1136,7 @@ Authorization: Bearer <jwt_token> (required)
   {
     "error": "Post not found"
   }
-  ```
+````
 
 - **500 Internal Server Error:**
   ```json
@@ -1649,9 +1683,12 @@ All endpoints return consistent error responses with the following structure:
   "createdAt": "number",
   "likesCount": "number",
   "commentsCount": "number",
+  "likedByUser": "boolean",
   "user": "User Object"
 }
 ```
+
+````
 
 ### Comment Object
 
@@ -1664,7 +1701,7 @@ All endpoints return consistent error responses with the following structure:
   "createdAt": "number",
   "user": "User Object"
 }
-```
+````
 
 ### Authentication Response
 

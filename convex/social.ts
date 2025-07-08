@@ -22,9 +22,56 @@ export const createPost = mutation({
 });
 
 export const getPost = query({
-  args: { postId: v.id("posts") },
+  args: {
+    postId: v.id("posts"),
+    userId: v.optional(v.id("users")),
+  },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.postId);
+    const post = await ctx.db.get(args.postId);
+    if (!post) return null;
+
+    const user = await ctx.db.get(post.userId);
+
+    // Get likes count for this post
+    const likes = await ctx.db
+      .query("likes")
+      .withIndex("by_post", (q) => q.eq("postId", args.postId))
+      .collect();
+
+    // Get comments count for this post
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_post", (q) => q.eq("postId", args.postId))
+      .collect();
+
+    // Check if current user has liked this post
+    let likedByUser = false;
+    if (args.userId) {
+      const userLike = await ctx.db
+        .query("likes")
+        .withIndex("by_user_post", (q) =>
+          q.eq("userId", args.userId).eq("postId", args.postId)
+        )
+        .first();
+      likedByUser = !!userLike;
+    }
+
+    return {
+      id: post._id,
+      userId: post.userId,
+      text: post.text || "",
+      imageUrl: post.imageUrl || "",
+      createdAt: post.createdAt,
+      likesCount: likes.length,
+      commentsCount: comments.length,
+      likedByUser,
+      user: {
+        id: user?._id || "",
+        name: user?.name || "",
+        email: user?.email || "",
+        avatarUrl: user?.avatarUrl || "",
+      },
+    };
   },
 });
 
@@ -88,7 +135,53 @@ export const getFeed = query({
       })
     );
 
-    return posts.flat().sort((a, b) => b.createdAt - a.createdAt);
+    const allPosts = posts.flat().sort((a, b) => b.createdAt - a.createdAt);
+
+    // Add user info, likes count, comments count, and likedByUser for each post
+    const postsWithDetails = await Promise.all(
+      allPosts.map(async (post) => {
+        const user = await ctx.db.get(post.userId);
+
+        // Get likes count for this post
+        const likes = await ctx.db
+          .query("likes")
+          .withIndex("by_post", (q) => q.eq("postId", post._id))
+          .collect();
+
+        // Get comments count for this post
+        const comments = await ctx.db
+          .query("comments")
+          .withIndex("by_post", (q) => q.eq("postId", post._id))
+          .collect();
+
+        // Check if current user has liked this post
+        const userLike = await ctx.db
+          .query("likes")
+          .withIndex("by_user_post", (q) =>
+            q.eq("userId", args.userId).eq("postId", post._id)
+          )
+          .first();
+
+        return {
+          id: post._id,
+          userId: post.userId,
+          text: post.text || "",
+          imageUrl: post.imageUrl || "",
+          createdAt: post.createdAt,
+          likesCount: likes.length,
+          commentsCount: comments.length,
+          likedByUser: !!userLike,
+          user: {
+            id: user?._id || "",
+            name: user?.name || "",
+            email: user?.email || "",
+            avatarUrl: user?.avatarUrl || "",
+          },
+        };
+      })
+    );
+
+    return postsWithDetails;
   },
 });
 
@@ -291,7 +384,10 @@ export const getComments = query({
 });
 
 export const getAllPosts = query({
-  handler: async (ctx) => {
+  args: {
+    userId: v.optional(v.id("users")),
+  },
+  handler: async (ctx, args) => {
     const posts = await ctx.db.query("posts").order("desc").collect();
 
     const postsWithUsers = await Promise.all(
@@ -310,6 +406,18 @@ export const getAllPosts = query({
           .withIndex("by_post", (q) => q.eq("postId", post._id))
           .collect();
 
+        // Check if current user has liked this post
+        let likedByUser = false;
+        if (args.userId) {
+          const userLike = await ctx.db
+            .query("likes")
+            .withIndex("by_user_post", (q) =>
+              q.eq("userId", args.userId).eq("postId", post._id)
+            )
+            .first();
+          likedByUser = !!userLike;
+        }
+
         return {
           id: post._id,
           text: post.text || "",
@@ -317,6 +425,7 @@ export const getAllPosts = query({
           createdAt: post.createdAt,
           likesCount: likes.length,
           commentsCount: comments.length,
+          likedByUser,
           user: {
             id: user?._id || "",
             name: user?.name || "",

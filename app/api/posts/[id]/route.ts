@@ -35,8 +35,29 @@ async function getHandler(
 ) {
   try {
     const { id } = await params;
+
+    // Try to get user ID from authorization header if present
+    let userId: Id<"users"> | undefined;
+    const authHeader = req.headers.get("authorization");
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      if (token) {
+        const decoded = verifyToken(token);
+        if (decoded) {
+          const user = await convex.query(api.users.getById, {
+            id: decoded.id as Id<"users">,
+          });
+          if (user) {
+            userId = user._id;
+          }
+        }
+      }
+    }
+
     const post = await convex.query(api.social.getPost, {
       postId: id as Id<"posts">,
+      userId,
     });
 
     if (!post) {
