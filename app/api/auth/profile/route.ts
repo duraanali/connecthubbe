@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
       name: user.name || "",
       email: user.email || "",
       avatarUrl: user.avatarUrl || "",
+      bio: user.bio || "",
       createdAt: user.createdAt,
       followersCount: user.followersCount || 0,
       followingCount: user.followingCount || 0,
@@ -146,12 +147,12 @@ export async function PUT(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { name, avatarUrl } = body;
+    const { name, avatarUrl, bio } = body;
 
     // Validate input
-    if (!name && !avatarUrl) {
+    if (!name && !avatarUrl && bio === undefined) {
       const response = NextResponse.json(
-        { error: "At least one field (name or avatarUrl) is required" },
+        { error: "At least one field (name, avatarUrl, or bio) is required" },
         { status: 400 }
       );
       addCorsHeaders(response);
@@ -159,9 +160,10 @@ export async function PUT(request: NextRequest) {
     }
 
     // Prepare update object
-    const updates: { name?: string; avatarUrl?: string } = {};
+    const updates: { name?: string; avatarUrl?: string; bio?: string } = {};
     if (name !== undefined) updates.name = name;
     if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
+    if (bio !== undefined) updates.bio = bio;
 
     // Update user profile
     const updatedUser = await convex.mutation(api.users.update, {
@@ -198,6 +200,7 @@ export async function PUT(request: NextRequest) {
       name: userWithCounts.name || "",
       email: userWithCounts.email || "",
       avatarUrl: userWithCounts.avatarUrl || "",
+      bio: userWithCounts.bio || "",
       createdAt: userWithCounts.createdAt,
       followersCount: userWithCounts.followersCount || 0,
       followingCount: userWithCounts.followingCount || 0,

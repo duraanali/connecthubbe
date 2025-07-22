@@ -7,6 +7,7 @@ export default defineSchema({
     email: v.string(),
     password: v.string(),
     avatarUrl: v.optional(v.string()),
+    bio: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_email", ["email"]),
 

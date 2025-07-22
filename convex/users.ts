@@ -65,6 +65,7 @@ export const getById = query({
       name: user.name || "",
       email: user.email || "",
       avatarUrl: user.avatarUrl || "",
+      bio: user.bio || "",
       followersCount: followers.length,
       followingCount: following.length,
       postsCount: allPosts.length,
@@ -78,6 +79,7 @@ export const update = mutation({
     id: v.id("users"),
     name: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
+    bio: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
@@ -166,6 +168,7 @@ export const searchUsers = query({
           name: user.name || "",
           username: user.email.split("@")[0], // Use email prefix as username
           avatar: user.avatarUrl || null,
+          bio: user.bio || "",
           is_following: isFollowing,
         };
       })
@@ -213,7 +216,7 @@ export const getPublicProfile = query({
       name: user.name || "",
       username: user.email.split("@")[0], // Use email prefix as username
       avatar: user.avatarUrl || null,
-      bio: "", // Not in schema yet, return empty string
+      bio: user.bio || "",
       followers_count: followers.length,
       following_count: following.length,
       is_following: isFollowing,
@@ -239,6 +242,7 @@ export const getFollowers = query({
           name: user?.name || "",
           email: user?.email || "",
           avatarUrl: user?.avatarUrl || "",
+          bio: user?.bio || "",
           username: user?.email ? user.email.split("@")[0] : "",
         };
       })

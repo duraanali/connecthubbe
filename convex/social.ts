@@ -50,7 +50,7 @@ export const getPost = query({
       const userLike = await ctx.db
         .query("likes")
         .withIndex("by_user_post", (q) =>
-          q.eq("userId", args.userId).eq("postId", args.postId)
+          q.eq("userId", args.userId!).eq("postId", args.postId)
         )
         .first();
       likedByUser = !!userLike;
@@ -248,6 +248,7 @@ export const getFollowing = query({
           name: user?.name || "",
           email: user?.email || "",
           avatarUrl: user?.avatarUrl || "",
+          bio: user?.bio || "",
         };
       })
     );
@@ -319,6 +320,7 @@ export const getLikes = query({
           name: user?.name || "",
           email: user?.email || "",
           avatarUrl: user?.avatarUrl || "",
+          bio: user?.bio || "",
         };
       })
     );
@@ -374,6 +376,7 @@ export const getComments = query({
             name: user?.name || "",
             email: user?.email || "",
             avatarUrl: user?.avatarUrl || "",
+            bio: user?.bio || "",
           },
         };
       })
@@ -412,7 +415,7 @@ export const getAllPosts = query({
           const userLike = await ctx.db
             .query("likes")
             .withIndex("by_user_post", (q) =>
-              q.eq("userId", args.userId).eq("postId", post._id)
+              q.eq("userId", args.userId!).eq("postId", post._id)
             )
             .first();
           likedByUser = !!userLike;
@@ -431,6 +434,7 @@ export const getAllPosts = query({
             name: user?.name || "",
             email: user?.email || "",
             avatarUrl: user?.avatarUrl || "",
+            bio: user?.bio || "",
           },
         };
       })

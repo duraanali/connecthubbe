@@ -52,6 +52,7 @@ export const getById = query({
         name: user?.name || "",
         email: user?.email || "",
         avatarUrl: user?.avatarUrl || "",
+        bio: user?.bio || "",
       },
     };
   },
@@ -101,6 +102,7 @@ export const getFeed = query({
             name: user?.name || "",
             email: user?.email || "",
             avatarUrl: user?.avatarUrl || "",
+            bio: user?.bio || "",
           },
         };
       })

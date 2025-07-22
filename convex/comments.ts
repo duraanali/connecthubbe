@@ -46,6 +46,7 @@ export const getByPost = query({
             name: user?.name || "",
             email: user?.email || "",
             avatarUrl: user?.avatarUrl || "",
+            bio: user?.bio || "",
           },
         };
       })

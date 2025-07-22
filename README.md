@@ -213,6 +213,7 @@ Authorization: Bearer <jwt_token> (required)
   "name": "John Doe",
   "email": "john@example.com",
   "avatarUrl": "https://example.com/avatar.jpg",
+  "bio": "Software developer and tech enthusiast",
   "createdAt": 1640995200000,
   "followersCount": 15,
   "followingCount": 8,
@@ -278,7 +279,8 @@ Content-Type: application/json
 ```json
 {
   "name": "string (optional)",
-  "avatarUrl": "string (optional)"
+  "avatarUrl": "string (optional)",
+  "bio": "string (optional)"
 }
 ```
 
@@ -287,7 +289,8 @@ Content-Type: application/json
 ```json
 {
   "name": "John Smith",
-  "avatarUrl": "https://example.com/new-avatar.jpg"
+  "avatarUrl": "https://example.com/new-avatar.jpg",
+  "bio": "Software developer and tech enthusiast"
 }
 ```
 
@@ -299,6 +302,7 @@ Content-Type: application/json
   "name": "John Smith",
   "email": "john@example.com",
   "avatarUrl": "https://example.com/new-avatar.jpg",
+  "bio": "Software developer and tech enthusiast",
   "createdAt": 1640995200000,
   "followersCount": 15,
   "followingCount": 8,
@@ -313,7 +317,7 @@ Content-Type: application/json
 
   ```json
   {
-    "error": "At least one field (name or avatarUrl) is required"
+    "error": "At least one field (name, avatarUrl, or bio) is required"
   }
   ```
 
@@ -378,6 +382,7 @@ Authorization: Bearer <jwt_token> (required)
   "name": "John Doe",
   "email": "john@example.com",
   "avatarUrl": "https://example.com/avatar.jpg",
+  "bio": "Software developer and tech enthusiast",
   "createdAt": 1640995200000,
   "followersCount": 15,
   "followingCount": 8,
@@ -459,6 +464,7 @@ GET /api/users/search
     "name": "Duraan Ali",
     "username": "durali",
     "avatar": "https://cdn.connecthub.app/avatars/durali.jpg",
+    "bio": "Frontend developer and mentor",
     "is_following": true
   },
   {
@@ -466,6 +472,7 @@ GET /api/users/search
     "name": "Durrah Noor",
     "username": "durrah",
     "avatar": null,
+    "bio": "",
     "is_following": false
   }
 ]
@@ -575,6 +582,7 @@ Authorization: Bearer <jwt_token> (required)
     "name": "Jane Doe",
     "email": "jane@example.com",
     "avatarUrl": "https://example.com/avatar1.jpg",
+    "bio": "UX Designer and coffee lover",
     "username": "jane"
   },
   {
@@ -582,6 +590,7 @@ Authorization: Bearer <jwt_token> (required)
     "name": "Bob Smith",
     "email": "bob@example.com",
     "avatarUrl": "",
+    "bio": "",
     "username": "bob"
   }
 ]
@@ -633,6 +642,7 @@ Authorization: Bearer <jwt_token> (required)
     "name": "Alice Johnson",
     "email": "alice@example.com",
     "avatarUrl": "https://example.com/avatar1.jpg",
+    "bio": "Full-stack developer and open source contributor",
     "username": "alice"
   },
   {
@@ -640,6 +650,7 @@ Authorization: Bearer <jwt_token> (required)
     "name": "Charlie Brown",
     "email": "charlie@example.com",
     "avatarUrl": "",
+    "bio": "",
     "username": "charlie"
   }
 ]
@@ -847,13 +858,15 @@ Authorization: Bearer <jwt_token> (required)
     "id": "user_id_1",
     "name": "Jane Doe",
     "email": "jane@example.com",
-    "avatarUrl": "https://example.com/avatar1.jpg"
+    "avatarUrl": "https://example.com/avatar1.jpg",
+    "bio": "UX Designer and coffee lover"
   },
   {
     "id": "user_id_2",
     "name": "Bob Smith",
     "email": "bob@example.com",
-    "avatarUrl": ""
+    "avatarUrl": "",
+    "bio": ""
   }
 ]
 ```
@@ -998,7 +1011,8 @@ Content-Type: application/json
       "id": "user_id_here",
       "name": "John Doe",
       "email": "john@example.com",
-      "avatarUrl": "https://example.com/avatar.jpg"
+      "avatarUrl": "https://example.com/avatar.jpg",
+      "bio": "Software developer and tech enthusiast"
     }
   }
 ]
@@ -1046,7 +1060,8 @@ Authorization: Bearer <jwt_token> (required)
       "id": "user_id_here",
       "name": "John Doe",
       "email": "john@example.com",
-      "avatarUrl": "https://example.com/avatar.jpg"
+      "avatarUrl": "https://example.com/avatar.jpg",
+      "bio": "Software developer and tech enthusiast"
     }
   }
 ]
@@ -1121,7 +1136,8 @@ Authorization: Bearer <jwt_token> (required)
     "id": "user_id_here",
     "name": "John Doe",
     "email": "john@example.com",
-    "avatarUrl": "https://example.com/avatar.jpg"
+    "avatarUrl": "https://example.com/avatar.jpg",
+    "bio": "Software developer and tech enthusiast"
   }
 }
 ```
@@ -1385,7 +1401,8 @@ GET /api/posts/post_123/comments?limit=20&cursor=comment_456
       "id": "user_id_here",
       "name": "John Doe",
       "email": "john@example.com",
-      "avatarUrl": "https://example.com/avatar.jpg"
+      "avatarUrl": "https://example.com/avatar.jpg",
+      "bio": "Software developer and tech enthusiast"
     }
   }
 ]
@@ -1663,6 +1680,7 @@ All endpoints return consistent error responses with the following structure:
   "name": "string",
   "email": "string",
   "avatarUrl": "string",
+  "bio": "string",
   "username": "string",
   "createdAt": "number",
   "followersCount": "number",
