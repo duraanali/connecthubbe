@@ -147,12 +147,15 @@ export async function PUT(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { name, avatarUrl, bio } = body;
+    const { name, avatarUrl, bio, storageId } = body;
 
     // Validate input
-    if (!name && !avatarUrl && bio === undefined) {
+    if (!name && !avatarUrl && bio === undefined && !storageId) {
       const response = NextResponse.json(
-        { error: "At least one field (name, avatarUrl, or bio) is required" },
+        {
+          error:
+            "At least one field (name, avatarUrl, bio, or storageId) is required",
+        },
         { status: 400 }
       );
       addCorsHeaders(response);
@@ -162,8 +165,30 @@ export async function PUT(request: NextRequest) {
     // Prepare update object
     const updates: { name?: string; avatarUrl?: string; bio?: string } = {};
     if (name !== undefined) updates.name = name;
-    if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
     if (bio !== undefined) updates.bio = bio;
+
+    // Handle file upload if storageId is provided
+    if (storageId) {
+      try {
+        const fileInfo = await convex.mutation(api.files.saveFile, {
+          storageId: storageId as Id<"_storage">,
+          type: "profile",
+        });
+        updates.avatarUrl = fileInfo.url;
+      } catch (error) {
+        const response = NextResponse.json(
+          {
+            error:
+              error instanceof Error ? error.message : "Failed to save image",
+          },
+          { status: 400 }
+        );
+        addCorsHeaders(response);
+        return response;
+      }
+    } else if (avatarUrl !== undefined) {
+      updates.avatarUrl = avatarUrl;
+    }
 
     // Update user profile
     const updatedUser = await convex.mutation(api.users.update, {

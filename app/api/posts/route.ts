@@ -107,7 +107,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log("Request body:", body);
 
-    const { text, image_url } = body;
+    const { text, image_url, storageId } = body;
 
     if (!text) {
       const response = NextResponse.json(
@@ -118,17 +118,40 @@ export async function POST(request: Request) {
       return response;
     }
 
+    let imageUrl = image_url;
+
+    // Handle file upload if storageId is provided
+    if (storageId) {
+      try {
+        const fileInfo = await convex.mutation(api.files.saveFile, {
+          storageId: storageId as Id<"_storage">,
+          type: "post",
+        });
+        imageUrl = fileInfo.url;
+      } catch (error) {
+        const response = NextResponse.json(
+          {
+            error:
+              error instanceof Error ? error.message : "Failed to save image",
+          },
+          { status: 400 }
+        );
+        addCorsHeaders(response);
+        return response;
+      }
+    }
+
     console.log("Creating post with:", {
       userId: user._id,
       text,
-      imageUrl: image_url,
+      imageUrl: imageUrl,
     });
 
     try {
       const post = await convex.mutation(api.social.createPost, {
         userId: user._id,
         text,
-        imageUrl: image_url,
+        imageUrl: imageUrl,
       });
 
       console.log("Created post:", post);
