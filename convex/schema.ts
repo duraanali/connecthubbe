@@ -50,4 +50,17 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_post", ["postId"]),
+
+  notifications: defineTable({
+    userId: v.id("users"),
+    senderId: v.id("users"),
+    type: v.string(),
+    referenceId: v.optional(v.union(v.string(), v.null())),
+    message: v.string(),
+    isRead: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_read", ["userId", "isRead"])
+    .index("by_sender", ["senderId"]),
 });

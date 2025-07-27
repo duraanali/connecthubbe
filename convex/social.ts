@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { api } from "./_generated/api";
 
 // Post functions
 export const createPost = mutation({
@@ -204,12 +205,28 @@ export const follow = mutation({
       throw new Error("Already following this user");
     }
 
+    // Get user names for notification message
+    const follower = await ctx.db.get(args.followerId);
+    const following = await ctx.db.get(args.followingId);
+
     // Create follow relationship
     await ctx.db.insert("follows", {
       followerId: args.followerId,
       followingId: args.followingId,
       createdAt: Date.now(),
     });
+
+    // Create notification for the user being followed
+    if (follower && following) {
+      await ctx.db.insert("notifications", {
+        userId: args.followingId,
+        senderId: args.followerId,
+        type: "follow",
+        message: `${follower.name} started following you.`,
+        isRead: false,
+        createdAt: Date.now(),
+      });
+    }
   },
 });
 
@@ -276,12 +293,29 @@ export const like = mutation({
       throw new Error("Already liked this post");
     }
 
+    // Get post and user information for notification
+    const post = await ctx.db.get(args.postId);
+    const user = await ctx.db.get(args.userId);
+
     // Create like
     await ctx.db.insert("likes", {
       userId: args.userId,
       postId: args.postId,
       createdAt: Date.now(),
     });
+
+    // Create notification for post owner (if not liking own post)
+    if (post && user && post.userId !== args.userId) {
+      await ctx.db.insert("notifications", {
+        userId: post.userId,
+        senderId: args.userId,
+        type: "like",
+        message: `${user.name} liked your post.`,
+        referenceId: args.postId,
+        isRead: false,
+        createdAt: Date.now(),
+      });
+    }
   },
 });
 
@@ -342,12 +376,27 @@ export const createComment = mutation({
       throw new Error("Post not found");
     }
 
+    const user = await ctx.db.get(args.userId);
+
     const commentId = await ctx.db.insert("comments", {
       postId: args.postId,
       userId: args.userId,
       text: args.text,
       createdAt: Date.now(),
     });
+
+    // Create notification for post owner (if not commenting on own post)
+    if (post && user && post.userId !== args.userId) {
+      await ctx.db.insert("notifications", {
+        userId: post.userId,
+        senderId: args.userId,
+        type: "comment",
+        message: `${user.name} commented on your post.`,
+        referenceId: args.postId,
+        isRead: false,
+        createdAt: Date.now(),
+      });
+    }
 
     return await ctx.db.get(commentId);
   },
